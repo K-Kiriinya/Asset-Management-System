@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Login | AMS</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+        <link rel="stylesheet" type="text/css" href="style.css" />
+        
+        <style>
+            .error-toast {
+                background: #ffebee;
+                color: #c62828;
+                border-left: 5px solid #c62828;
+                padding: 12px 20px;
+                border-radius: 8px;
+                margin-bottom: 20px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .error-toast .close {
+                cursor: pointer;
+                font-size: 20px;
+                font-weight: bold;
+            }
+        </style>
+    </head>
+    
+    <body>
+        <div class="card">
+            <h1>Asset Management System</h1>
+            <p class="subtitle">Enter your credentials to access your account</p>
+
+            <!-- Error toast container -->
+            <div id="errorToast" class="error-toast" style="display: none;">
+                <span id="errorMessage"></span>
+                <span class="close" onclick="this.parentElement.style.display='none'">&times;</span>
+            </div>
+
+            <form action="login" method="post">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required="required" />
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    
+                    <div class="password-wrapper">
+                        <input type="password" id="password" name="password" required="required" />
+                        <i class="fas fa-lock lock-icon"></i>
+                        <i class="far fa-eye eye-icon" id="togglePassword"></i>
+                    </div>
+                    
+                    <div class="forgot-password">
+                        <a href="#">Forgot password?</a>
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary">Sign in</button>
+            </form>
+
+            <div class="hint">
+                Contact your system administrator if you need access: admin@ams.co.ke
+            </div>
+        </div>
+
+        <script type="text/javascript">
+            // <![CDATA[
+            // Password visibility toggle
+            const togglePassword = document.getElementById('togglePassword');
+            const password = document.getElementById('password');
+            if (togglePassword && password) {
+                togglePassword.addEventListener('click', function() {
+                    const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+                    password.setAttribute('type', type);
+                    this.classList.toggle('fa-eye');
+                    this.classList.toggle('fa-eye-slash');
+                });
+            }
+
+            // Show error message
+            function getQueryParam(param) {
+                const urlParams = new URLSearchParams(window.location.search);
+                return urlParams.get(param);
+            }
+
+            const error = getQueryParam('error');
+            if (error) {
+                const toast = document.getElementById('errorToast');
+                const msg = document.getElementById('errorMessage');
+                if (error === 'missing') {
+                    msg.innerText = 'Username and password are required.';
+                } else if (error === 'invalid') {
+                    msg.innerText = 'Invalid username or password.';
+                } else {
+                    msg.innerText = 'Login failed. Please try again.';
+                }
+                toast.style.display = 'flex';
+            }
+            // ]]>
+        </script>
+    </body>
+</html>

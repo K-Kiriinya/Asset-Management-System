@@ -1,0 +1,628 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Admin | AMS</title>
+        <link rel="stylesheet" href="style.css" />   
+    </head>
+    
+    <body class="admin-page">
+        <div class="admin-container">
+            <header class="admin-header">
+                <div>
+                    <h1 class="admin-title">Admin Dashboard</h1>
+                    <div class="admin-subtitle">Asset Management System</div>
+                </div>
+                <div class="admin-actions">
+                    <span class="admin-user">Signed in as: <span id="displayUsername">Admin</span> (<span id="displayRole">ADMIN</span>)</span>
+                    <a class="admin-link" href="logout">sign out</a>
+                </div>
+            </header>
+
+            <!-- Toast containers -->
+            <div id="toastMessage" class="message" style="display: none;">
+                <span id="toastMessageText"></span>
+                <button class="close-toast" onclick="closeToast('toastMessage')">&times;</button>
+            </div>
+            <div id="toastError" class="error" style="display: none;">
+                <span id="toastErrorText"></span>
+                <button class="close-toast" onclick="closeToast('toastError')">&times;</button>
+            </div>
+
+            <!-- Edit User Modal -->
+            <div id="editUserModal" class="modal">
+                <div class="modal-content">
+                    <span class="close" onclick="closeEditModal()">&times;</span>
+                    <h3>Edit User</h3>
+                    <form id="editUserForm">
+                        <input type="hidden" id="editUserId" name="userId" />
+                        <div class="field">
+                            <label for="editRole">Role</label>
+                            <select id="editRole" name="role">
+                                <option value="USER">User</option>
+                                <option value="ADMIN">Admin</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label for="editStatus">Status</label>
+                            <select id="editStatus" name="status">
+                                <option value="ACTIVE">Active</option>
+                                <option value="DISABLED">Disabled</option>
+                            </select>
+                        </div>
+                        <div class="modal-actions">
+                            <button type="submit" class="btn-primary">Save</button>
+                            <button type="button" class="btn-secondary" onclick="closeEditModal()">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <nav class="tabs" role="tablist" aria-label="Admin tabs">
+                <button class="tab active" role="tab" aria-selected="true" data-tab="users">Create Users</button>
+                <button class="tab" role="tab" aria-selected="false" data-tab="manageUsers">Manage Users</button>
+                <button class="tab" role="tab" aria-selected="false" data-tab="assets">Assets</button>
+                <button class="tab" role="tab" aria-selected="false" data-tab="assigned">Assigned Assets</button>
+                <button class="tab" role="tab" aria-selected="false" data-tab="assign">Assign Asset</button>
+            </nav>
+
+            <!-- Tab panels -->
+            <main class="tab-panels">
+                <!-- Create Users Panel -->
+                <section class="panel active" id="users" role="tabpanel">
+                    <h2 class="panel-title">Create User</h2>
+                   
+                    <form id="createUserForm" class="form-grid">
+                        <div class="field">
+                            <label for="fullName">Full Name</label>
+                            <input type="text" id="fullName" name="fullName" required="required" />
+                        
+                        </div>
+                        <div class="field">
+                            <label for="username">Username</label>
+                            <input type="text" id="username" name="username" required="required" />
+                        </div>
+                       
+                        <div class="field">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" name="email" required="required" />
+                        </div>
+                       
+                        <div class="field">
+                            <label for="role">Role</label>
+                            <select id="role" name="role" required="required">
+                                <option value="USER">User</option>
+                                <option value="ADMIN">Admin</option>
+                            </select>
+                        </div>
+                       
+                        <div class="field">
+                            <label for="password">Temporary Password</label>
+                            <input type="password" id="password" name="password" required="required" />
+                        </div>
+                        
+                        <div class="field">
+                            <label for="status">Status</label>
+                            <select id="status" name="status" required="required">
+                                <option value="ACTIVE">Active</option>
+                                <option value="DISABLED">Disabled</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button class="btn-primary" type="submit">Create User</button>
+                            <button class="btn-secondary" type="reset">Clear</button>
+                        </div>
+                    </form>
+                </section>
+
+                <!-- Manage Users Panel -->
+                <section class="panel" id="manageUsers" role="tabpanel">
+                    <h2 class="panel-title">Manage Users</h2>
+                    <div class="table-wrap">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th><th>Full Name</th><th>Username</th><th>Email</th><th>Role</th><th>Status</th><th colspan="2">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Assets Panel -->
+                <section class="panel" id="assets" role="tabpanel">
+                    <div class="panel-header">
+                        <h2 class="panel-title">Assets</h2>
+                        <button class="btn-primary" type="button" onclick="document.getElementById('addAssetForm').style.display='block'">Add Asset</button>
+                    </div>
+                    <div id="addAssetForm" style="display:none; margin-bottom:20px; padding:20px; background:#f9f9f9; border-radius:12px;">
+                        <h3>Add New Asset</h3>
+                        <form id="addAssetFormElement">
+                            <div class="form-grid" style="grid-template-columns:1fr 1fr;">
+                                <div class="field"><label>Asset Tag</label><input type="text" name="assetTag" required="required" /></div>
+                                <div class="field"><label>Asset Name</label><input type="text" name="assetName" required="required" /></div>
+                                <div class="field"><label>Category</label><input type="text" name="category" required="required" /></div>
+                            </div>
+                            <div class="form-actions">
+                                <button class="btn-primary" type="submit">Add Asset</button>
+                                <button class="btn-secondary" type="button" onclick="document.getElementById('addAssetForm').style.display='none'">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="table-wrap">
+                        <table class="table">
+                            <thead>
+                                <tr><th>Asset Tag</th><th>Asset Name</th><th>Category</th><th>Status</th><th>Action</th></tr>
+                            </thead>
+                            <tbody id="assetsTableBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Assigned Assets Panel -->
+                <section class="panel" id="assigned" role="tabpanel">
+                    <h2 class="panel-title">Assigned Assets</h2>
+                    <div class="table-wrap">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Asset Tag</th>
+                                    <th>Asset Name</th>
+                                    <th>Assigned To</th>
+                                    <th>Date Assigned</th>
+                                    <th>Return Date</th>
+                                    <th>Notes</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="assignmentsTableBody"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Assign Asset Panel (updated) -->
+                <section class="panel" id="assign" role="tabpanel">
+                    <h2 class="panel-title">Assign Asset</h2>
+                    <form id="assignAssetForm" class="form-grid">
+                        <div class="field">
+                            <label for="assetId">Asset</label>
+                            <select id="assetId" name="assetId" required="required">
+                                <option value="">Select an asset</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label for="userId">Assign To</label>
+                            <select id="userId" name="userId" required="required">
+                                <option value="">Select a user</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label for="assignedDate">Assigned Date</label>
+                            <input type="text" id="assignedDate" name="assignedDate"
+                                   readonly="readonly" required="required"
+                                   placeholder="dd/mm/yyyy" />
+                        </div>
+                        <div class="field full">
+                            <label for="notes">Notes (optional)</label>
+                            <input type="text" id="notes" name="notes" placeholder="e.g., Issued with charger + bag" />
+                        </div>
+                        <div class="form-actions">
+                            <button class="btn-primary" type="submit">Assign</button>
+                            <button class="btn-secondary" type="reset">Clear</button>
+                        </div>
+                    </form>
+                </section>
+            </main>
+        </div>
+
+        <script type="text/javascript">
+            // <![CDATA[
+            // Utility Functions
+            function showToast(message, isError) {
+                const toastId = isError ? 'toastError' : 'toastMessage';
+                const textId = isError ? 'toastErrorText' : 'toastMessageText';
+                document.getElementById(textId).innerText = message;
+                const toast = document.getElementById(toastId);
+                toast.style.display = 'flex';
+                setTimeout(() => {
+                    toast.classList.add('fade-out');
+                    setTimeout(() => {
+                        toast.style.display = 'none';
+                        toast.classList.remove('fade-out');
+                    }, 300);
+                }, 4000);
+            }
+
+            function closeToast(toastId) {
+                const toast = document.getElementById(toastId);
+                toast.classList.add('fade-out');
+                setTimeout(() => {
+                    toast.style.display = 'none';
+                    toast.classList.remove('fade-out');
+                }, 300);
+            }
+
+            function escapeHtml(unsafe) {
+                if (!unsafe) return '';
+                return unsafe
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
+            }
+
+            function formDataToParams(formData) {
+                const params = new URLSearchParams();
+                for (let pair of formData.entries()) {
+                    params.append(pair[0], pair[1]);
+                }
+                return params;
+            }
+
+            // Modal Functions
+            let currentEditUserId = null;
+
+            function openEditModal(userId, currentRole, currentStatus) {
+                currentEditUserId = userId;
+                document.getElementById('editUserId').value = userId;
+                document.getElementById('editRole').value = currentRole;
+                document.getElementById('editStatus').value = currentStatus;
+                document.getElementById('editUserModal').style.display = 'block';
+            }
+
+            function closeEditModal() {
+                document.getElementById('editUserModal').style.display = 'none';
+            }
+
+            // Handle edit form submission
+            document.getElementById('editUserForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const params = formDataToParams(formData);
+                try {
+                    const response = await fetch('updateUser', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: params
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        showToast(result.message || 'User updated successfully');
+                        closeEditModal();
+                        loadDashboardData(); // refresh user list
+                    } else {
+                        showToast(result.message || 'Error updating user', true);
+                    }
+                } catch (error) {
+                    showToast('Network error: ' + error.message, true);
+                }
+            });
+
+            // Close modal if clicked outside
+            window.onclick = function(event) {
+                const modal = document.getElementById('editUserModal');
+                if (event.target === modal) {
+                    closeEditModal();
+                }
+            };
+
+            // Data Fetching
+            async function loadDashboardData() {
+                try {
+                    const response = await fetch('api/admin/data');
+                    if (!response.ok) throw new Error('Failed to fetch data');
+                    const data = await response.json();
+
+                    // Update session info
+                    if (data.session) {
+                        document.getElementById('displayUsername').innerText = data.session.username;
+                        document.getElementById('displayRole').innerText = data.session.role;
+                    }
+
+                    // Users table.
+                    let usersHtml = '';
+                    data.allUsers.forEach(user => {
+                        usersHtml += `<tr>
+                            <td>${user.userId}</td>
+                            <td>${escapeHtml(user.fullName)}</td>
+                            <td>${escapeHtml(user.username)}</td>
+                            <td>${escapeHtml(user.email)}</td>
+                            <td>${user.role}</td>
+                            <td>${user.status}</td>
+                            <td>
+                                <button class="edit-btn" onclick="openEditModal(${user.userId}, '${user.role}', '${user.status}')">Edit</button>
+                            </td>
+                            <td>
+                                <form onsubmit="deleteUser(event, ${user.userId})" style="display:inline;">
+                                    <button type="submit" class="delete-btn">Delete</button>
+                                </form>
+                            </td>
+                        </tr>`;
+                    });
+                    document.getElementById('usersTableBody').innerHTML = usersHtml;
+
+                    // Assets table with Decommission and Reactivate buttons
+                    let assetsHtml = '';
+                    data.assets.forEach(asset => {
+                        let actionButton = '';
+                        
+                        if (asset.assetStatus === 'AVAILABLE') {
+                            actionButton = `<button class="decommission-btn" onclick="decommissionAsset(event, ${asset.assetId})">Decommission</button>`;
+                        } else if (asset.assetStatus === 'DECOMMISSIONED') {
+                            actionButton = `<button class="reactivate-btn" onclick="reactivateAsset(event, ${asset.assetId})">Reactivate</button>`;
+                        } // else 'ASSIGNED' → no action
+                        assetsHtml += `<tr>
+                            <td>${escapeHtml(asset.assetTag)}</td>
+                            <td>${escapeHtml(asset.assetName)}</td>
+                            <td>${escapeHtml(asset.category)}</td>
+                            <td>${asset.assetStatus}</td>
+                            <td>${actionButton}</td>
+                        </tr>`;
+                    });
+                    document.getElementById('assetsTableBody').innerHTML = assetsHtml;
+
+                    // Assignments table.
+                    let assignmentsHtml = '';
+                    data.assignments.forEach(ass => {
+                        let returnButton = '';
+                        
+                        if (!ass.returnedAt) {
+                            returnButton = `<button class="return-btn" onclick="returnAsset(event, ${ass.assignmentId})">Return</button>`;
+                        }
+                        assignmentsHtml += `<tr>
+                            <td>${escapeHtml(ass.assetTag)}</td>
+                            <td>${escapeHtml(ass.assetName)}</td>
+                            <td>${escapeHtml(ass.userName)}</td>
+                            <td>${ass.assignedAt}</td>
+                            <td>${ass.returnedAt ? ass.returnedAt : ''}</td>
+                            <td>${escapeHtml(ass.notes) || ''}</td>
+                            <td>${returnButton}</td>
+                        </tr>`;
+                    });
+                    document.getElementById('assignmentsTableBody').innerHTML = assignmentsHtml;
+
+                    // Asset dropdown
+                    let assetOptions = '<option value="">Select an asset</option>';
+                    data.availableAssets.forEach(asset => {
+                        assetOptions += `<option value="${asset.assetId}">${escapeHtml(asset.assetTag)} - ${escapeHtml(asset.assetName)}</option>`;
+                    });
+                    document.getElementById('assetId').innerHTML = assetOptions;
+
+                    // User dropdown
+                    let userOptions = '<option value="">Select a user</option>';
+                    data.users.forEach(user => {
+                        userOptions += `<option value="${user.userId}">${escapeHtml(user.username)} - ${escapeHtml(user.fullName)}</option>`;
+                    });
+                    document.getElementById('userId').innerHTML = userOptions;
+
+                } catch (error) {
+                    showToast('Error loading data: ' + error.message, true);
+                }
+            }
+
+            // Form Submissions
+            // Create User
+            document.getElementById('createUserForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const params = formDataToParams(formData);
+                try {
+                    const response = await fetch('createUser', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: params
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        showToast(result.message || 'User created successfully');
+                        e.target.reset();
+                        loadDashboardData();
+                    } else {
+                        showToast(result.message || 'Error creating user', true);
+                    }
+                } catch (error) {
+                    showToast('Network error: ' + error.message, true);
+                }
+            });
+
+            // Add Asset
+            document.getElementById('addAssetFormElement').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const params = formDataToParams(formData);
+                try {
+                    const response = await fetch('addAsset', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: params
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        showToast(result.message || 'Asset added successfully');
+                        e.target.reset();
+                        document.getElementById('addAssetForm').style.display = 'none';
+                        loadDashboardData();
+                    } else {
+                        showToast(result.message || 'Error adding asset', true);
+                    }
+                } catch (error) {
+                    showToast('Network error: ' + error.message, true);
+                }
+            });
+
+            // Assign Asset
+            document.getElementById('assignAssetForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const params = formDataToParams(formData);
+                try {
+                    const response = await fetch('assignAsset', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: params
+                    });
+                    
+                    const result = await response.json();
+                    if (result.success) {
+                        showToast(result.message || 'Asset assigned successfully');
+                        e.target.reset();
+                        loadDashboardData();
+                    } else {
+                        showToast(result.message || 'Error assigning asset', true);
+                    }
+                } catch (error) {
+                    showToast('Network error: ' + error.message, true);
+                }
+            });
+
+            // Delete User
+            window.deleteUser = async (event, userId) => {
+                event.preventDefault();
+                if (!confirm('Delete this user?')) return;
+                const params = new URLSearchParams();
+                params.append('userId', userId);
+                
+                try {
+                    const response = await fetch('deleteUser', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: params
+                    });
+                    
+                    const result = await response.json();
+                    if (result.success) {
+                        showToast(result.message || 'User deleted successfully');
+                        loadDashboardData();
+                    } else {
+                        showToast(result.message || 'Error deleting user', true);
+                    }
+                } catch (error) {
+                    showToast('Network error: ' + error.message, true);
+                }
+            };
+
+            // Decommission Asset
+            window.decommissionAsset = async (event, assetId) => {
+                event.preventDefault();
+                if (!confirm('Decommission this asset? It will no longer be available for assignment.')) return;
+                const params = new URLSearchParams();
+                params.append('assetId', assetId);
+                
+                try {
+                    const response = await fetch('decommissionAsset', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: params
+                    });
+                    
+                    const result = await response.json();
+                    if (result.success) {
+                        showToast(result.message || 'Asset decommissioned successfully');
+                        loadDashboardData();
+                    } else {
+                        showToast(result.message || 'Error decommissioning asset', true);
+                    }
+                } catch (error) {
+                    showToast('Network error: ' + error.message, true);
+                }
+            };
+            
+            // Reactivate Asset
+            window.reactivateAsset = async (event, assetId) => {
+                event.preventDefault();
+                if (!confirm('Reactivate this asset? It will become available for assignment.')) return;
+                const params = new URLSearchParams();
+                params.append('assetId', assetId);
+                
+                try {
+                    const response = await fetch('reactivateAsset', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: params
+                    });
+                    
+                    const result = await response.json();
+                    if (result.success) {
+                        showToast(result.message || 'Asset reactivated successfully');
+                        loadDashboardData();
+                    } else {
+                        showToast(result.message || 'Error reactivating asset', true);
+                    }
+                } catch (error) {
+                    showToast('Network error: ' + error.message, true);
+                }
+            };
+
+            // Return Asset
+            window.returnAsset = async (event, assignmentId) => {
+                event.preventDefault();
+                if (!confirm('Return this asset?')) return;
+                const params = new URLSearchParams();
+                params.append('assignmentId', assignmentId);
+                
+                try {
+                    const response = await fetch('returnAsset', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: params
+                    });
+                    
+                    const result = await response.json();
+                    if (result.success) {
+                        showToast(result.message || 'Asset returned successfully');
+                        loadDashboardData();
+                    } else {
+                        showToast(result.message || 'Error returning asset', true);
+                    }
+                } catch (error) {
+                    showToast('Network error: ' + error.message, true);
+                }
+            };
+
+            // Tab Switching 
+            const tabs = document.querySelectorAll(".tab");
+            const panels = document.querySelectorAll(".panel");
+            
+            tabs.forEach((tab) => {
+            
+                tab.addEventListener("click", () => {
+                    const target = tab.getAttribute("data-tab");
+                    tabs.forEach((t) => {
+                        t.classList.remove("active");
+                        t.setAttribute("aria-selected", "false");
+                    });
+                    
+                    panels.forEach((p) => p.classList.remove("active"));
+                    tab.classList.add("active");
+                    tab.setAttribute("aria-selected", "true");
+                    document.getElementById(target).classList.add("active");
+                });
+            });
+            // ]]>
+            
+            // Set today's date in the readonly date field
+            function setTodayDate() {
+                const today = new Date();
+                const dd = String(today.getDate()).padStart(2, '0');
+                const mm = String(today.getMonth() + 1).padStart(2, '0');
+                const yyyy = today.getFullYear();
+                document.getElementById('assignedDate').value = `${dd}/${mm}/${yyyy}`;
+            }
+
+            // Call it on page load
+            window.onload = function() {
+                loadDashboardData();
+                setTodayDate();
+            };
+        </script>
+    </body>
+</html>

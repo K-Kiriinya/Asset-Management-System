@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+   
+    <head>
+        <title>User Dashboard</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="stylesheet" href="style.css" />
+        
+        <style>
+            .toast-message {
+                background: #e6f7e6;
+                color: #2e7d32;
+                border-left: 5px solid #2e7d32;
+                padding: 12px 20px;
+                border-radius: 8px;
+                margin-bottom: 20px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .toast-message .close {
+                cursor: pointer;
+                font-size: 20px;
+                font-weight: bold;
+            }
+        </style>
+    
+    </head>
+    <body class="user-page">
+        
+        <div class="user-container">
+            <div class="user-header">
+                <div>
+                    <h1 class="user-title">User Dashboard</h1>
+                    <div class="user-subtitle">Asset Management System</div>
+                </div>
+                <div class="user-actions">
+                    <span class="user-name">Signed in as: <span id="displayUsername">Loading...</span> (<span id="displayRole"></span>)</span>
+                    <a class="user-link" href="logout">sign out</a>
+                </div>
+            </div>
+
+            <div class="card-ui">
+                <div class="panel-header">
+                    <h2 class="panel-title">My Assets</h2>
+                </div>
+                <div class="table-wrap">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Asset Tag</th>
+                                <th>Asset Name</th>
+                                <th>Category</th>
+                                <th>Date Assigned</th>
+                                <th>Status</th>
+                                <th>Notes</th>   
+                            </tr>
+                        </thead>
+                        <tbody id="assetsTableBody">
+                            <!-- Filled by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="hint" style="margin-top: 14px;">
+                    If an assigned asset is missing or incorrect, contact your administrator.
+                </div>
+            </div>
+        </div>
+
+        <script type="text/javascript">
+            // <![CDATA[
+            async function loadUserInfo() {
+                
+                try {
+                    const response = await fetch('api/user/info');
+                    if (!response.ok) throw new Error('Failed to fetch user info');
+                    const data = await response.json();
+                    
+                    if (data.username) {
+                        document.getElementById('displayUsername').innerText = data.username;
+                        document.getElementById('displayRole').innerText = data.role;
+                    } else {
+                        window.location.href = 'login.xhtml'; // not logged in
+                    }
+                } catch (error) {
+                    console.error('Error loading user info:', error);
+                }
+            }
+
+            async function loadUserAssets() {
+                
+                try {
+                    const response = await fetch('api/user/data');
+                    
+                    if (!response.ok) {
+                        if (response.status === 401) {
+                            window.location.href = 'login.xhtml';
+                            return;
+                        }
+                        throw new Error('Failed to fetch data');
+                    }
+                    
+                    const assets = await response.json();
+
+                    const tbody = document.getElementById('assetsTableBody');
+                    if (assets.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#667;padding:18px;">No assets assigned.</td></tr>`;
+                        return;
+                    }
+
+                    let html = '';
+                    assets.forEach(asset => {
+                        html += `<tr>
+                            <td>${escapeHtml(asset.assetTag)}</td>
+                            <td>${escapeHtml(asset.assetName)}</td>
+                            <td>${escapeHtml(asset.category)}</td>
+                            <td>${asset.assignedAt}</td>
+                            <td>${asset.status}</td>
+                            <td>${escapeHtml(asset.notes) || ''}</td>
+                        </tr>`;
+                    });
+                    tbody.innerHTML = html;
+                } catch (error) {
+                    console.error('Error loading assets:', error);
+                    document.getElementById('assetsTableBody').innerHTML =
+                        `<tr><td colspan="6" style="text-align:center;color:#c62828;padding:18px;">Error loading assets.</td></tr>`;
+                }
+            }
+
+            function escapeHtml(unsafe) {
+                if (!unsafe) return '';
+                return unsafe
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
+            }
+
+            // Load both user info and assets on page load
+            window.onload = function() {
+                loadUserInfo();
+                loadUserAssets();
+            };
+            // ]]>
+        </script>
+    </body>
+</html>
