@@ -20,8 +20,7 @@ public class ReturnAsset extends HttpServlet {
     private static final String DB_PASS = "admin";
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         response.setContentType("application/json");
         Map<String, Object> result = new HashMap<>();
 
@@ -46,6 +45,7 @@ public class ReturnAsset extends HttpServlet {
         try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS)) {
             conn.setAutoCommit(false);
             try {
+                
                 // Get asset_id
                 String getAssetSql = "SELECT asset_id FROM asset_assignments WHERE assignment_id = ?";
                 int assetId;

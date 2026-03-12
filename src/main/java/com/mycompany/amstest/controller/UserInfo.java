@@ -22,7 +22,9 @@ public class UserInfo extends HttpServlet {
         
         if (session != null && session.getAttribute("username") != null) {
             result.put("username", (String) session.getAttribute("username"));
+            result.put("fullName", (String) session.getAttribute("fullName"));
             result.put("role", (String) session.getAttribute("role"));
+            result.put("email", (String) session.getAttribute("email"));
         } else {
             result.put("error", "Not logged in");
         }

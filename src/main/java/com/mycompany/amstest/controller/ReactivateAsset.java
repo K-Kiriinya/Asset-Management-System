@@ -43,6 +43,7 @@ public class ReactivateAsset extends HttpServlet {
         }
 
         try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS)) {
+            
             // Update asset status to AVAILABLE
             String sql = "UPDATE assets SET asset_status = 'AVAILABLE' WHERE asset_id = ?";
             try (PreparedStatement pstmt = conn.prepareStatement(sql)) {

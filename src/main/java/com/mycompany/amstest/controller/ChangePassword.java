@@ -12,8 +12,8 @@ import java.sql.*;
 import java.util.HashMap;
 import java.util.Map;
 
-@WebServlet("/decommissionAsset")
-public class DecommissionAsset extends HttpServlet {
+@WebServlet("/changePassword")
+public class ChangePassword extends HttpServlet {
 
     private static final String DB_URL = "jdbc:mariadb://localhost:3306/assetsys";
     private static final String DB_USER = "assysAdmin";
@@ -25,53 +25,57 @@ public class DecommissionAsset extends HttpServlet {
         Map<String, Object> result = new HashMap<>();
 
         HttpSession session = request.getSession(false);
-        if (session == null || !"ADMIN".equals(session.getAttribute("role"))) {
+        if (session == null || session.getAttribute("userId") == null) {
             result.put("success", false);
-            result.put("message", "Unauthorized");
+            result.put("message", "Not logged in");
             response.getWriter().print(new Gson().toJson(result));
             return;
         }
 
-        int assetId;
-        try {
-            assetId = Integer.parseInt(request.getParameter("assetId"));
-        } catch (NumberFormatException e) {
+        int userId = (int) session.getAttribute("userId");
+        String currentPassword = request.getParameter("currentPassword");
+        String newPassword = request.getParameter("newPassword");
+        String confirmPassword = request.getParameter("confirmPassword");
+
+        if (!newPassword.equals(confirmPassword)) {
             result.put("success", false);
-            result.put("message", "Invalid asset ID");
+            result.put("message", "New passwords do not match");
             response.getWriter().print(new Gson().toJson(result));
             return;
         }
 
         try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS)) {
             
-            // Check if asset is currently assigned
-            String checkSql = "SELECT COUNT(*) FROM asset_assignments WHERE asset_id = ? AND returned_at IS NULL";
+            // Verify current password
+            String checkSql = "SELECT password FROM users WHERE userid = ?";
             try (PreparedStatement checkStmt = conn.prepareStatement(checkSql)) {
-                checkStmt.setInt(1, assetId);
+                checkStmt.setInt(1, userId);
                 ResultSet rs = checkStmt.executeQuery();
-                rs.next();
-                int count = rs.getInt(1);
-                if (count > 0) {
+                if (!rs.next()) {
                     result.put("success", false);
-                    result.put("message", "Cannot decommission asset that is currently assigned");
+                    result.put("message", "User not found");
+                    response.getWriter().print(new Gson().toJson(result));
+                    return;
+                }
+                String dbPassword = rs.getString("password");
+                if (!dbPassword.equals(currentPassword)) {
+                    result.put("success", false);
+                    result.put("message", "Current password is incorrect");
                     response.getWriter().print(new Gson().toJson(result));
                     return;
                 }
             }
 
-            // Update asset status to DECOMMISSIONED
-            String updateSql = "UPDATE assets SET asset_status = 'DECOMMISSIONED' WHERE asset_id = ?";
+            // Update password
+            String updateSql = "UPDATE users SET password = ? WHERE userid = ?";
             try (PreparedStatement pstmt = conn.prepareStatement(updateSql)) {
-                pstmt.setInt(1, assetId);
-                int rows = pstmt.executeUpdate();
-                if (rows > 0) {
-                    result.put("success", true);
-                    result.put("message", "Asset decommissioned successfully");
-                } else {
-                    result.put("success", false);
-                    result.put("message", "Asset not found");
-                }
+                pstmt.setString(1, newPassword);
+                pstmt.setInt(2, userId);
+                pstmt.executeUpdate();
             }
+
+            result.put("success", true);
+            result.put("message", "Password changed successfully");
         } catch (SQLException e) {
             e.printStackTrace();
             result.put("success", false);

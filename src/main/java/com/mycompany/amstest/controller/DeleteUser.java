@@ -20,8 +20,7 @@ public class DeleteUser extends HttpServlet {
     private static final String DB_PASS = "admin";
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         response.setContentType("application/json");
         Map<String, Object> result = new HashMap<>();
 
@@ -45,6 +44,7 @@ public class DeleteUser extends HttpServlet {
         }
 
         try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS)) {
+            
             // Check for any assiged assets
             String checkSql = "SELECT COUNT(*) FROM asset_assignments WHERE user_id = ?";
             try (PreparedStatement checkStmt = conn.prepareStatement(checkSql)) {

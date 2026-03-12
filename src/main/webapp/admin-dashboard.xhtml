@@ -8,6 +8,7 @@
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Admin | AMS</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
         <link rel="stylesheet" href="style.css" />   
     </head>
     
@@ -19,8 +20,26 @@
                     <div class="admin-subtitle">Asset Management System</div>
                 </div>
                 <div class="admin-actions">
-                    <span class="admin-user">Signed in as: <span id="displayUsername">Admin</span> (<span id="displayRole">ADMIN</span>)</span>
-                    <a class="admin-link" href="logout">sign out</a>
+                    
+                    <span id="displayUsername" style="display:none;">Admin</span>
+                    <span id="displayRole" style="display:none;">ADMIN</span>
+                    
+                    <!-- Dropdown icon button -->
+                    <div class="user-dropdown">
+                        <button class="user-dropdown-btn" onclick="toggleAdminDropdown()">
+                            <i class="fas fa-user-circle"></i>
+                        </button>
+                        <div id="adminDropdownContent" class="dropdown-content">
+                            <div class="user-info">
+                                <div><strong>Name:</strong> <span id="adminDropdownUsername"></span></div>
+                                <div><strong>Email:</strong> <span id="adminDropdownEmail"></span></div>
+                                <div><strong>Role:</strong> <span id="adminDropdownRole"></span></div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" onclick="openChangePasswordModal(); return false;">Change Password</a>
+                            <a href="logout">Sign Out</a>
+                        </div>
+                    </div>
                 </div>
             </header>
 
@@ -63,6 +82,32 @@
                 </div>
             </div>
 
+            <!-- Change Password Modal -->
+            <div id="changePasswordModal" class="modal" style="display: none;">
+                <div class="modal-content">
+                    <span class="close" onclick="closeChangePasswordModal()">&times;</span>
+                    <h3>Change Password</h3>
+                    <form id="changePasswordForm">
+                        <div class="field">
+                            <label for="currentPassword">Current Password</label>
+                            <input type="password" id="currentPassword" name="currentPassword" required="required" />
+                        </div>
+                        <div class="field">
+                            <label for="newPassword">New Password</label>
+                            <input type="password" id="newPassword" name="newPassword" required="required" />
+                        </div>
+                        <div class="field">
+                            <label for="confirmPassword">Confirm New Password</label>
+                            <input type="password" id="confirmPassword" name="confirmPassword" required="required" />
+                        </div>
+                        <div class="modal-actions">
+                            <button type="submit" class="btn-primary">Save</button>
+                            <button type="button" class="btn-secondary" onclick="closeChangePasswordModal()">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
             <!-- Tabs -->
             <nav class="tabs" role="tablist" aria-label="Admin tabs">
                 <button class="tab active" role="tab" aria-selected="true" data-tab="users">Create Users</button>
@@ -74,26 +119,23 @@
 
             <!-- Tab panels -->
             <main class="tab-panels">
+                
                 <!-- Create Users Panel -->
                 <section class="panel active" id="users" role="tabpanel">
                     <h2 class="panel-title">Create User</h2>
-                   
                     <form id="createUserForm" class="form-grid">
                         <div class="field">
                             <label for="fullName">Full Name</label>
                             <input type="text" id="fullName" name="fullName" required="required" />
-                        
                         </div>
                         <div class="field">
                             <label for="username">Username</label>
                             <input type="text" id="username" name="username" required="required" />
                         </div>
-                       
                         <div class="field">
                             <label for="email">Email</label>
                             <input type="email" id="email" name="email" required="required" />
                         </div>
-                       
                         <div class="field">
                             <label for="role">Role</label>
                             <select id="role" name="role" required="required">
@@ -101,12 +143,10 @@
                                 <option value="ADMIN">Admin</option>
                             </select>
                         </div>
-                       
                         <div class="field">
                             <label for="password">Temporary Password</label>
                             <input type="password" id="password" name="password" required="required" />
                         </div>
-                        
                         <div class="field">
                             <label for="status">Status</label>
                             <select id="status" name="status" required="required">
@@ -114,7 +154,6 @@
                                 <option value="DISABLED">Disabled</option>
                             </select>
                         </div>
-                        
                         <div class="form-actions">
                             <button class="btn-primary" type="submit">Create User</button>
                             <button class="btn-secondary" type="reset">Clear</button>
@@ -188,7 +227,7 @@
                     </div>
                 </section>
 
-                <!-- Assign Asset Panel (updated) -->
+                <!-- Assign Asset Panel -->
                 <section class="panel" id="assign" role="tabpanel">
                     <h2 class="panel-title">Assign Asset</h2>
                     <form id="assignAssetForm" class="form-grid">
@@ -225,7 +264,7 @@
 
         <script type="text/javascript">
             // <![CDATA[
-            // Utility Functions
+            // ======== Utility Functions =========
             function showToast(message, isError) {
                 const toastId = isError ? 'toastError' : 'toastMessage';
                 const textId = isError ? 'toastErrorText' : 'toastMessageText';
@@ -268,7 +307,69 @@
                 return params;
             }
 
-            // Modal Functions
+            // ======== Dropdown Functions ========
+            function toggleAdminDropdown() {
+                document.getElementById('adminDropdownContent').classList.toggle('show');
+            }
+
+            // Close dropdown when clicking outside
+            window.onclick = function(event) {
+                if (!event.target.matches('.user-dropdown-btn')) {
+                    const dropdowns = document.getElementsByClassName('dropdown-content');
+                    for (let i = 0; i < dropdowns.length; i++) {
+                        const openDropdown = dropdowns[i];
+                        if (openDropdown.classList.contains('show')) {
+                            openDropdown.classList.remove('show');
+                        }
+                    }
+                }
+                // Close modals if clicked outside
+                const editModal = document.getElementById('editUserModal');
+                if (event.target === editModal) {
+                    closeEditModal();
+                }
+                const changeModal = document.getElementById('changePasswordModal');
+                if (event.target === changeModal) {
+                    closeChangePasswordModal();
+                }
+            };
+
+            // ========= Change Password Modal ============
+            function openChangePasswordModal() {
+                document.getElementById('changePasswordModal').style.display = 'block';
+                // close dropdown if open
+                document.getElementById('adminDropdownContent').classList.remove('show');
+            }
+
+            function closeChangePasswordModal() {
+                document.getElementById('changePasswordModal').style.display = 'none';
+                document.getElementById('changePasswordForm').reset();
+            }
+
+            // Handle change password form
+            document.getElementById('changePasswordForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const params = formDataToParams(formData);
+                try {
+                    const response = await fetch('changePassword', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: params
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        showToast(result.message || 'Password changed successfully');
+                        closeChangePasswordModal();
+                    } else {
+                        showToast(result.message || 'Error changing password', true);
+                    }
+                } catch (error) {
+                    showToast('Network error: ' + error.message, true);
+                }
+            });
+
+            // ========= Edit User Modal ==========
             let currentEditUserId = null;
 
             function openEditModal(userId, currentRole, currentStatus) {
@@ -283,7 +384,6 @@
                 document.getElementById('editUserModal').style.display = 'none';
             }
 
-            // Handle edit form submission
             document.getElementById('editUserForm').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const formData = new FormData(e.target);
@@ -298,7 +398,7 @@
                     if (result.success) {
                         showToast(result.message || 'User updated successfully');
                         closeEditModal();
-                        loadDashboardData(); // refresh user list
+                        loadDashboardData();
                     } else {
                         showToast(result.message || 'Error updating user', true);
                     }
@@ -307,28 +407,26 @@
                 }
             });
 
-            // Close modal if clicked outside
-            window.onclick = function(event) {
-                const modal = document.getElementById('editUserModal');
-                if (event.target === modal) {
-                    closeEditModal();
-                }
-            };
-
-            // Data Fetching
+            // ====== Data Fetching =======
             async function loadDashboardData() {
                 try {
                     const response = await fetch('api/admin/data');
                     if (!response.ok) throw new Error('Failed to fetch data');
                     const data = await response.json();
 
-                    // Update session info
+                    // Update session info for dropdown
                     if (data.session) {
                         document.getElementById('displayUsername').innerText = data.session.username;
                         document.getElementById('displayRole').innerText = data.session.role;
+                        
+                        // Populate dropdown
+                        const fullName = data.session.fullName || data.session.username;
+                        document.getElementById('adminDropdownUsername').innerText = fullName;
+                        document.getElementById('adminDropdownEmail').innerText = data.session.email || '—';
+                        document.getElementById('adminDropdownRole').innerText = data.session.role || '—';
                     }
 
-                    // Users table.
+                    // Users table
                     let usersHtml = '';
                     data.allUsers.forEach(user => {
                         usersHtml += `<tr>
@@ -350,16 +448,15 @@
                     });
                     document.getElementById('usersTableBody').innerHTML = usersHtml;
 
-                    // Assets table with Decommission and Reactivate buttons
+                    // Assets table
                     let assetsHtml = '';
                     data.assets.forEach(asset => {
                         let actionButton = '';
-                        
                         if (asset.assetStatus === 'AVAILABLE') {
                             actionButton = `<button class="decommission-btn" onclick="decommissionAsset(event, ${asset.assetId})">Decommission</button>`;
                         } else if (asset.assetStatus === 'DECOMMISSIONED') {
                             actionButton = `<button class="reactivate-btn" onclick="reactivateAsset(event, ${asset.assetId})">Reactivate</button>`;
-                        } // else 'ASSIGNED' → no action
+                        }
                         assetsHtml += `<tr>
                             <td>${escapeHtml(asset.assetTag)}</td>
                             <td>${escapeHtml(asset.assetName)}</td>
@@ -370,11 +467,10 @@
                     });
                     document.getElementById('assetsTableBody').innerHTML = assetsHtml;
 
-                    // Assignments table.
+                    // Assignments table
                     let assignmentsHtml = '';
                     data.assignments.forEach(ass => {
                         let returnButton = '';
-                        
                         if (!ass.returnedAt) {
                             returnButton = `<button class="return-btn" onclick="returnAsset(event, ${ass.assignmentId})">Return</button>`;
                         }
@@ -409,7 +505,7 @@
                 }
             }
 
-            // Form Submissions
+            // ======== Form Submissions =========
             // Create User
             document.getElementById('createUserForm').addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -470,7 +566,6 @@
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                         body: params
                     });
-                    
                     const result = await response.json();
                     if (result.success) {
                         showToast(result.message || 'Asset assigned successfully');
@@ -490,14 +585,12 @@
                 if (!confirm('Delete this user?')) return;
                 const params = new URLSearchParams();
                 params.append('userId', userId);
-                
                 try {
                     const response = await fetch('deleteUser', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                         body: params
                     });
-                    
                     const result = await response.json();
                     if (result.success) {
                         showToast(result.message || 'User deleted successfully');
@@ -516,14 +609,12 @@
                 if (!confirm('Decommission this asset? It will no longer be available for assignment.')) return;
                 const params = new URLSearchParams();
                 params.append('assetId', assetId);
-                
                 try {
                     const response = await fetch('decommissionAsset', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                         body: params
                     });
-                    
                     const result = await response.json();
                     if (result.success) {
                         showToast(result.message || 'Asset decommissioned successfully');
@@ -542,14 +633,12 @@
                 if (!confirm('Reactivate this asset? It will become available for assignment.')) return;
                 const params = new URLSearchParams();
                 params.append('assetId', assetId);
-                
                 try {
                     const response = await fetch('reactivateAsset', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                         body: params
                     });
-                    
                     const result = await response.json();
                     if (result.success) {
                         showToast(result.message || 'Asset reactivated successfully');
@@ -568,14 +657,12 @@
                 if (!confirm('Return this asset?')) return;
                 const params = new URLSearchParams();
                 params.append('assignmentId', assignmentId);
-                
                 try {
                     const response = await fetch('returnAsset', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                         body: params
                     });
-                    
                     const result = await response.json();
                     if (result.success) {
                         showToast(result.message || 'Asset returned successfully');
@@ -588,27 +675,23 @@
                 }
             };
 
-            // Tab Switching 
+            // ======== Tab Switching =========
             const tabs = document.querySelectorAll(".tab");
             const panels = document.querySelectorAll(".panel");
-            
             tabs.forEach((tab) => {
-            
                 tab.addEventListener("click", () => {
                     const target = tab.getAttribute("data-tab");
                     tabs.forEach((t) => {
                         t.classList.remove("active");
                         t.setAttribute("aria-selected", "false");
                     });
-                    
                     panels.forEach((p) => p.classList.remove("active"));
                     tab.classList.add("active");
                     tab.setAttribute("aria-selected", "true");
                     document.getElementById(target).classList.add("active");
                 });
             });
-            // ]]>
-            
+
             // Set today's date in the readonly date field
             function setTodayDate() {
                 const today = new Date();
@@ -618,11 +701,12 @@
                 document.getElementById('assignedDate').value = `${dd}/${mm}/${yyyy}`;
             }
 
-            // Call it on page load
+            // Call on page load
             window.onload = function() {
                 loadDashboardData();
                 setTodayDate();
             };
+            // ]]>
         </script>
     </body>
 </html>

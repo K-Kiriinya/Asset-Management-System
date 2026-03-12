@@ -20,8 +20,7 @@ public class UserData extends HttpServlet {
     private static final String DB_PASS = "admin";
 
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         response.setContentType("application/json");
         HttpSession session = request.getSession(false);
 

@@ -57,6 +57,7 @@ public class AssignAsset extends HttpServlet {
         String dbDate = parts[2] + "-" + parts[1] + "-" + parts[0]; // yyyy-mm-dd
 
         try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS)) {
+            
             // Insert assignment
             String insertSql = "INSERT INTO asset_assignments (asset_id, user_id, assigned_at) VALUES (?, ?, ?)";
             try (PreparedStatement pstmt = conn.prepareStatement(insertSql)) {

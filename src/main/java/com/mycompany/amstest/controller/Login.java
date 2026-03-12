@@ -22,8 +22,7 @@ public class Login extends HttpServlet {
     }
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
         System.out.println("=== LOGIN POST HIT ===");
         String username = request.getParameter("username");
@@ -38,7 +37,7 @@ public class Login extends HttpServlet {
             return;
         }
 
-        // Authenticate and retrieve userId and role
+        // Authenticate and retrieve user details
         UserAuthResult authResult = authenticateUser(username, password);
         if (authResult == null) {
             System.out.println("Authentication failed");
@@ -51,6 +50,8 @@ public class Login extends HttpServlet {
         session.setAttribute("userId", authResult.userId);
         session.setAttribute("username", username);
         session.setAttribute("role", authResult.role);
+        session.setAttribute("email", authResult.email);
+        session.setAttribute("fullName", authResult.fullName); // <-- NEW: store full name
 
         // Redirect to appropriate dashboard
         String ctx = request.getContextPath();
@@ -63,10 +64,10 @@ public class Login extends HttpServlet {
 
     /**
      * Authenticates a user against the database.
-     * @return UserAuthResult containing userId and role, or null if authentication fails.
+     * @return UserAuthResult containing userId, role, email, and fullName, or null if authentication fails.
      */
     private UserAuthResult authenticateUser(String username, String password) {
-        String sql = "SELECT userid, password, role FROM users WHERE username = ?";
+        String sql = "SELECT userid, password, role, email, full_name FROM users WHERE username = ?";
 
         try {
             Class.forName("org.mariadb.jdbc.Driver");
@@ -87,11 +88,14 @@ public class Login extends HttpServlet {
                     int userId = rs.getInt("userid");
                     String dbPassword = rs.getString("password");
                     String role = rs.getString("role");
-                    System.out.println("DB password: " + dbPassword + ", role: " + role);
+                    String email = rs.getString("email");
+                    String fullName = rs.getString("full_name"); // <-- NEW: get full name
+                    System.out.println("DB password: " + dbPassword + ", role: " + role + ", email: " + email + ", fullName: " + fullName);
 
                     if (dbPassword != null && dbPassword.equals(password)) {
                         System.out.println("Password match – authentication successful");
-                        return new UserAuthResult(userId, role);
+                        // Return all fields
+                        return new UserAuthResult(userId, role, email, fullName);
                     } else {
                         System.out.println("Password mismatch");
                         return null;
@@ -114,9 +118,14 @@ public class Login extends HttpServlet {
     private static class UserAuthResult {
         int userId;
         String role;
-        UserAuthResult(int userId, String role) {
+        String email;
+        String fullName;
+
+        UserAuthResult(int userId, String role, String email, String fullName) {
             this.userId = userId;
             this.role = role;
+            this.email = email;
+            this.fullName = fullName;
         }
     }
 }

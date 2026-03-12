@@ -29,10 +29,13 @@ public class Admin extends HttpServlet {
             Map<String, String> sessionInfo = new HashMap<>();
             sessionInfo.put("username", (String) session.getAttribute("username"));
             sessionInfo.put("role", (String) session.getAttribute("role"));
+            sessionInfo.put("fullName", (String) session.getAttribute("fullName"));
+            sessionInfo.put("email", (String) session.getAttribute("email"));
             data.put("session", sessionInfo);
         }
 
         try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASS)) {
+            
             // 1. All assets
             List<Asset> assets = new ArrayList<>();
             try (Statement stmt = conn.createStatement();
@@ -97,7 +100,7 @@ public class Admin extends HttpServlet {
             }
             data.put("availableAssets", availableAssets);
 
-            // 5. All assignments (including returned) – for Assigned Assets tab
+            // 5. All assignments – for Assigned Assets tab
             List<Assignment> assignments = new ArrayList<>();
             String assignSql = "SELECT ass.assignment_id, a.asset_tag, a.asset_name, u.full_name, ass.assigned_at, ass.returned_at, ass.notes " +
                 "FROM asset_assignments ass " +

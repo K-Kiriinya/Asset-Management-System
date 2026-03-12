@@ -8,6 +8,7 @@
         <title>User Dashboard</title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
         <link rel="stylesheet" href="style.css" />
         
         <style>
@@ -22,25 +23,66 @@
                 justify-content: space-between;
                 align-items: center;
             }
+            
             .toast-message .close {
                 cursor: pointer;
                 font-size: 20px;
                 font-weight: bold;
             }
         </style>
-    
     </head>
+    
     <body class="user-page">
         
         <div class="user-container">
+           
             <div class="user-header">
                 <div>
                     <h1 class="user-title">User Dashboard</h1>
                     <div class="user-subtitle">Asset Management System</div>
                 </div>
                 <div class="user-actions">
-                    <span class="user-name">Signed in as: <span id="displayUsername">Loading...</span> (<span id="displayRole"></span>)</span>
-                    <a class="user-link" href="logout">sign out</a>
+                    <div class="user-dropdown">
+                        <button class="user-dropdown-btn" onclick="toggleUserDropdown()">
+                            <i class="fas fa-user-circle"></i>  <!-- user icon -->
+                        </button>
+                        <div id="userDropdownContent" class="dropdown-content">
+                            <div class="user-info">
+                                <div><strong>Name:</strong> <span id="dropdownUsername"></span></div>
+                                <div><strong>Email:</strong> <span id="dropdownEmail"></span></div>
+                                <div><strong>Role:</strong> <span id="dropdownRole"></span></div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" onclick="openChangePasswordModal(); return false;">Change Password</a>
+                            <a href="logout">Sign Out</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Change Password Modal -->
+            <div id="changePasswordModal" class="modal" style="display: none;">
+                <div class="modal-content">
+                    <span class="close" onclick="closeChangePasswordModal()">&times;</span>
+                    <h3>Change Password</h3>
+                    <form id="changePasswordForm">
+                        <div class="field">
+                            <label for="currentPassword">Current Password</label>
+                            <input type="password" id="currentPassword" name="currentPassword" required="required" />
+                        </div>
+                        <div class="field">
+                            <label for="newPassword">New Password</label>
+                            <input type="password" id="newPassword" name="newPassword" required="required" />
+                        </div>
+                        <div class="field">
+                            <label for="confirmPassword">Confirm New Password</label>
+                            <input type="password" id="confirmPassword" name="confirmPassword" required="required" />
+                        </div>
+                        <div class="modal-actions">
+                            <button type="submit" class="btn-primary">Save</button>
+                            <button type="button" class="btn-secondary" onclick="closeChangePasswordModal()">Cancel</button>
+                        </div>
+                    </form>
                 </div>
             </div>
 
@@ -73,18 +115,81 @@
 
         <script type="text/javascript">
             // <![CDATA[
+            function showToast(message, isError) {
+                alert(message);
+            }
+
+            // Toggle dropdown
+            function toggleUserDropdown() {
+                document.getElementById('userDropdownContent').classList.toggle('show');
+            }
+
+            // Close dropdown when clicking outside
+            window.onclick = function(event) {
+                if (!event.target.matches('.user-dropdown-btn') && !event.target.matches('.dropdown-arrow')) {
+                    const dropdowns = document.getElementsByClassName('dropdown-content');
+                    for (let i = 0; i < dropdowns.length; i++) {
+                        const openDropdown = dropdowns[i];
+                        if (openDropdown.classList.contains('show')) {
+                            openDropdown.classList.remove('show');
+                        }
+                    }
+                }
+                // Also close modal if clicked outside
+                const modal = document.getElementById('changePasswordModal');
+                if (event.target === modal) {
+                    closeChangePasswordModal();
+                }
+            };
+
+            // Modal functions
+            function openChangePasswordModal() {
+                document.getElementById('changePasswordModal').style.display = 'block';
+                toggleUserDropdown(); // close dropdown
+            }
+
+            function closeChangePasswordModal() {
+                document.getElementById('changePasswordModal').style.display = 'none';
+                document.getElementById('changePasswordForm').reset();
+            }
+
+            // Handle change password form
+            document.getElementById('changePasswordForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const params = new URLSearchParams(formData);
+                try {
+                    const response = await fetch('changePassword', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: params
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        showToast(result.message || 'Password changed successfully');
+                        closeChangePasswordModal();
+                    } else {
+                        showToast(result.message || 'Error changing password', true);
+                    }
+                } catch (error) {
+                    showToast('Network error: ' + error.message, true);
+                }
+            });
+
+            // Load user info
             async function loadUserInfo() {
-                
                 try {
                     const response = await fetch('api/user/info');
                     if (!response.ok) throw new Error('Failed to fetch user info');
                     const data = await response.json();
-                    
+
                     if (data.username) {
-                        document.getElementById('displayUsername').innerText = data.username;
-                        document.getElementById('displayRole').innerText = data.role;
+                        const displayName = data.fullName || data.username;
+                        document.getElementById('dropdownUsername').innerText = displayName;
+                        document.getElementById('dropdownEmail').innerText = data.email || '—';
+                        document.getElementById('dropdownRole').innerText = data.role || '—';
                     } else {
-                        window.location.href = 'login.xhtml'; // not logged in
+                        window.location.href = 'login.xhtml';
                     }
                 } catch (error) {
                     console.error('Error loading user info:', error);
@@ -92,7 +197,6 @@
             }
 
             async function loadUserAssets() {
-                
                 try {
                     const response = await fetch('api/user/data');
                     
