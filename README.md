@@ -58,4 +58,4 @@ Tracks the assignment history of assets to users. This is a junction table linki
 
 ---
 
-## Summary Diagram
+## Thank you!
